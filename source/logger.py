@@ -1,4 +1,6 @@
+import datetime
 import logging
+import os
 
 
 class ConsoleColors:
@@ -13,8 +15,13 @@ class ConsoleColors:
     RESET = '\033[0m'
 
 
-def setup_logging(log_file):
+def setup_logging():
     """Создаем функцию инициализирующую логгер"""
+    log_file = (f"cache/"
+                f"{datetime.date.today().strftime('%d.%m.%Y')}/"
+                f"log_{datetime.datetime.now().strftime('%H_%M_%S')}.log")
+
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     with open(log_file, "w"):
         pass
@@ -23,9 +30,9 @@ def setup_logging(log_file):
         def filter(self, record):
             return record.levelno == logging.INFO
 
-    class DebugFilter(logging.Filter):
+    class WarningFilter(logging.Filter):
         def filter(self, record):
-            return record.levelno == logging.DEBUG
+            return record.levelno == logging.WARNING
 
     # Создаем логгер
     logger = logging.getLogger()
@@ -39,13 +46,13 @@ def setup_logging(log_file):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # # Обработчик для DEBUG
-    # debug_handler = logging.StreamHandler()
-    # debug_handler.setLevel(logging.DEBUG)
-    # debug_formatter = logging.Formatter(ConsoleColors.RESET + "%(levelname)s - %(message)s")
-    # debug_handler.setFormatter(debug_formatter)
-    # debug_handler.addFilter(DebugFilter())
-    # logger.addHandler(debug_handler)
+    # Обработчик для WARNING
+    debug_handler = logging.StreamHandler()
+    debug_handler.setLevel(logging.WARNING)
+    debug_formatter = logging.Formatter(ConsoleColors.BLUE + "%(levelname)s - %(message)s")
+    debug_handler.setFormatter(debug_formatter)
+    debug_handler.addFilter(WarningFilter())
+    logger.addHandler(debug_handler)
 
     # Обработчик для INFO
     info_handler = logging.StreamHandler()

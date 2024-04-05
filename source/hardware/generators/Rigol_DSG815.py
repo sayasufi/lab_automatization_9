@@ -1,13 +1,20 @@
 import logging
 import time
 
-from source.interfaces import Generator
+from source.interfaces import Generator, scan_instr
 
 
-class Rigol(Generator):
-    def __init__(self, ip: str = "192.168.1.102", level: int = -70, freq: int = 1160):
+class RigolDSG815(Generator):
+    def __init__(self, ip: str | None = None, level: int = -70, freq: int = 1160):
+        if not ip:
+            ip = scan_instr("Rigol")
+            if not ip:
+                logging.error("IP адрес задан неверно")
+                raise TypeError("IP адрес задан неверно")
+            else:
+                logging.info(f"Rigol найден на {ip}")
+
         super().__init__(ip)
-
         self.set_factory_settings()
         self.level: int = level
         self.freq: int | float = freq

@@ -6,7 +6,7 @@ import time
 from source.interfaces import Oscilloscope
 
 
-class Akip(Oscilloscope):
+class AKIP4122(Oscilloscope):
     def __init__(self, ip: str = "192.168.1.72", port: int = 3000):
         super().__init__(ip, port)
         self.set_factory_settings()

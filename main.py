@@ -1,43 +1,25 @@
-import logging
-
-from log.logger import setup_logging
-from source.Akip import Akip
-from source.Rigol import Rigol
-from source.funcs import SearchOptimalLevel
-from source.scan import scan_instr
-
-FREQ_START = 1120  # Начальная частота измерения в Мгц
-FREQ_STOP = 1220  # Конечная частота измерения в Мгц
-FREQ_STEP = 1  # Шаг измерения частоты в Мгц
-LEVEL = -70  # Уровень сигнала в Дб
-
-DB_STEP = 10
-CENTER_FREQ = 1160
-
+import warnings
+from source.parsing import config_pars, name_exp_parse
+from source.logger import setup_logging
+import source.hardware as hardware
+from source.funcs import *
 
 def main():
     """Точка входа"""
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+    setup_logging()
+    exp_name, variables = config_pars("config.ini")
+    logging.info("Файл config.ini успешно загружен")
 
-    # Путь до лог файла
-    log_file = "log/cache.log"
-    setup_logging(log_file)
-
-    ip_rigol = scan_instr("Rigol")
-    logging.info(f"Rigol найден на {ip_rigol}")
+    names_for_file = name_exp_parse()
 
     # Инициализация осциллографа и генератора
-    generator = Rigol(ip=ip_rigol, level=-70, freq=1160)
-    oscilloscope = Akip()
+    generator = hardware.RigolDSG815(level=-70, freq=1160)
+    oscilloscope = hardware.AKIP4122()
 
-    search_optimal_level = SearchOptimalLevel(FREQ_START,
-                                              FREQ_STOP,
-                                              FREQ_STEP,
-                                              CENTER_FREQ,
-                                              DB_STEP,
-                                              oscilloscope,
-                                              generator)
-    search_optimal_level.start()
 
+    exp_class = globals()[exp_name](*variables, oscilloscope, generator, names_for_file)
+    exp_class.start()
 
 if __name__ == '__main__':
     main()

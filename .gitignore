@@ -59,6 +59,8 @@ cover/
 *.csv
 *.log
 *.csv#
+*.xlsx
+*.xlsx#
 
 # Django stuff:
 local_settings.py
