@@ -1,8 +1,10 @@
 import warnings
-from source.parsing import config_pars, name_exp_parse
-from source.logger import setup_logging
+
 import source.hardware as hardware
 from source.funcs import *
+from source.logger import setup_logging
+from source.parsing import config_pars, name_exp_parse
+
 
 def main():
     """Точка входа"""
@@ -17,9 +19,9 @@ def main():
     generator = hardware.RigolDSG815(level=-70, freq=1160)
     oscilloscope = hardware.AKIP4122()
 
-
     exp_class = globals()[exp_name](*variables, oscilloscope, generator, names_for_file)
     exp_class.start()
+
 
 if __name__ == '__main__':
     main()

@@ -2,11 +2,9 @@ import datetime
 import logging
 import os
 import time
-import warnings
 
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib import animation
 
 
 class ConvertData:
@@ -90,20 +88,20 @@ class ConvertData:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
+
 class PowerLimiter:
     def __init__(self, center_freq, min_freq, max_freq):
         self.__min_limitation = {
-            (min_freq, min_freq+20): -20,
-            (min_freq+20, center_freq - 8): 0,
-            (center_freq-8, center_freq+8): -70,
-            (center_freq+8, max_freq): 0
+            (min_freq, center_freq - 8): -10,
+            (center_freq - 8, center_freq + 8): -70,
+            (center_freq + 8, max_freq): 0
         }
         self.__max_limitation = {
-            (min_freq, center_freq-8): 0,
-            (center_freq-8, center_freq-6): -50,
-            (center_freq-6, center_freq+6): -70,
-            (center_freq+6, center_freq+8): -50,
-            (center_freq+8, max_freq): 0
+            (min_freq, center_freq - 8): 0,
+            (center_freq - 8, center_freq - 6): -10,
+            (center_freq - 6, center_freq + 6): -40,
+            (center_freq + 6, center_freq + 8): -10,
+            (center_freq + 8, max_freq): 0
         }
 
     def get_max_limit(self, freq):
@@ -123,7 +121,7 @@ class PowerLimiter:
 
 class Calculation:
     def __init__(self, osc, gen, db_step, window):
-        self.voltage_center = None
+        self.center_voltage = None
         self.osc = osc
         self.gen = gen
         self.db_step = db_step
@@ -132,7 +130,8 @@ class Calculation:
     def search_optimal_level(self, freq_current, flag=False):
 
         voltage_last = 1000
-        pkp_last = 0
+        volt_list = []
+        result_list = []
 
         for db_current in range(self.window.get_min_limit(freq_current),
                                 self.window.get_max_limit(freq_current) + 1,
@@ -143,19 +142,17 @@ class Calculation:
             voltage_current = self.osc.convert_voltage(data["AVERage"])
             pkp_current = self.osc.convert_voltage(data["PKPK"])
 
-            if abs(voltage_current - 1) >= abs(voltage_last - 1) + 0.05 or voltage_current < 0.7:
+            if voltage_current < 0.85 or db_current == self.window.get_max_limit(freq_current):
+                volt_list = [abs(x - 1) for x in volt_list]
+                min_index = volt_list.index(min(volt_list))
                 if flag:
-                    self.voltage_center = voltage_last
-                return voltage_last, pkp_last, db_current - self.db_step
+                    self.center_voltage = voltage_last
+                return result_list[min_index]
 
-            elif db_current == self.window.get_max_limit(freq_current):
-                if flag:
-                    self.voltage_center = voltage_current
-                return voltage_current, pkp_current, db_current
             else:
-                voltage_last = voltage_current
-                pkp_last = pkp_current
+                volt_list.append(voltage_current)
+                result_list.append((voltage_current, pkp_current, db_current))
 
     def calculate_l(self, voltage, db):
         """Расчет чувствительности"""
-        return (voltage - self.voltage_center) / 0.0245 + db
+        return (voltage - self.center_voltage) / 0.0245 + db

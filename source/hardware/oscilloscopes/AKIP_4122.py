@@ -1,6 +1,5 @@
 import json
 import logging
-import socket
 import time
 
 from source.interfaces import Oscilloscope
@@ -38,6 +37,3 @@ class AKIP4122(Oscilloscope):
         self.sock.send("*CLS\n".encode())
         time.sleep(2)
         logging.info("Сброс AKIP к заводским настройкам успешно произведен")
-
-
-
